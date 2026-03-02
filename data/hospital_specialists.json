@@ -1,0 +1,105 @@
+{
+  "cauvery_hospital_tirunelveli": [
+    {
+      "name": "Dr. S. Ganesan",
+      "specialty": "Neurology",
+      "qualification": "MBBS, MD, DCH, DM",
+      "experience": "20+ Years",
+      "bio": "Senior Neurologist specializing in brain, spine, and neuro-immunological disorders."
+    },
+    {
+      "name": "Dr. T. G. Prabhakar",
+      "specialty": "Orthopedics",
+      "qualification": "MBBS, D. Ortho",
+      "experience": "26 Years",
+      "bio": "Expert in trauma, accident surgery, and joint replacements."
+    },
+    {
+      "name": "Dr. S. Sivaprakash",
+      "specialty": "Endocrinology",
+      "qualification": "MBBS, MD, DM",
+      "experience": "Senior Consultant",
+      "bio": "Specialist in hormone-related disorders and diabetic management."
+    }
+  ],
+  "shifa_hospitals_tirunelveli": [
+    {
+      "name": "Dr. Girish Deepak",
+      "specialty": "Interventional Cardiology",
+      "qualification": "MD, DM, FNB, FSCAI",
+      "experience": "15+ Years",
+      "bio": "Senior interventional cardiologist focusing on cardiac and heart failure management."
+    },
+    {
+      "name": "Dr. M. Mohamed Ibrahim",
+      "specialty": "Surgical Oncology",
+      "qualification": "MS, DNB, MRCS, FEBS",
+      "experience": "12+ Years",
+      "bio": "Expert in complex cancer surgeries and bariatric laparoscopic procedures."
+    }
+  ],
+  "porunai_hospitals_tirunelveli": [
+    {
+      "name": "Dr. R. Srinivasan",
+      "specialty": "Cardiology",
+      "qualification": "MD, DM (Cardio)",
+      "experience": "Senior Consultant",
+      "bio": "Specialist in clinical cardiology and cardiovascular critical care."
+    },
+    {
+      "name": "Dr. Dhanushkodi Manikandan",
+      "specialty": "Medical Oncology",
+      "qualification": "MD, DM (Oncology)",
+      "experience": "10+ Years",
+      "bio": "Specialist in chemotherapy and advanced targeted cancer therapies."
+    }
+  ],
+  "lakshmi_madhavan_hospital_tirunelveli": [
+    {
+      "name": "Dr. M. Manickavasagam",
+      "specialty": "Pediatrics & Neonatology",
+      "qualification": "MBBS, MD",
+      "experience": "25+ Years",
+      "bio": "Managing Director and renowned child medicine specialist in Tirunelveli."
+    },
+    {
+      "name": "Dr. M. Madhubala",
+      "specialty": "Obstetrics & Gynaecology",
+      "qualification": "MBBS, MD, DNB, MNAMS",
+      "experience": "Senior Consultant",
+      "bio": "Specialist in normal delivery and high-risk obstetric care."
+    }
+  ],
+  "vasan_eye_care_hospital_tirunelveli": [
+    {
+      "name": "Dr. R. Meenakshi",
+      "specialty": "Paediatric Ophthalmology",
+      "qualification": "MS, DO, DNB",
+      "experience": "Chief Medical Officer",
+      "bio": "Leading expert in child eye care and pediatric ocular health."
+    },
+    {
+      "name": "Dr. V. Maneksha",
+      "specialty": "Orbit & Oculoplasty",
+      "qualification": "MS",
+      "experience": "Chief Specialist",
+      "bio": "Expert in ocular oncology and reconstructive eye surgeries."
+    }
+  ],
+  "agarwals_eye_hospital_tirunelveli": [
+    {
+      "name": "Dr. Prem Kumar Joseph",
+      "specialty": "General Ophthalmology",
+      "qualification": "MBBS, DO",
+      "experience": "47 Years",
+      "bio": "Veteran ophthalmologist specializing in comprehensive eye care and pediatric vision."
+    },
+    {
+      "name": "Dr. John Abraham",
+      "specialty": "Cataract & Refractive",
+      "qualification": "MS, DO",
+      "experience": "45 Years",
+      "bio": "Expert in advanced cataract surgery and vision correction procedures."
+    }
+  ]
+}

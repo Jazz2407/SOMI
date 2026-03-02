@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOMI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDRDXKtxtph5UVdp_OswG2xzlpBhWjU_24&libraries=places"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
+        
+        /* Side Panel and Modal Animations */
+        #hospital-detail-panel {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 70;
+        }
+        .panel-hidden { transform: translateX(100%); }
+        .panel-visible { transform: translateX(0); }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex overflow-hidden">
+
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <i data-lucide="stethoscope" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-semibold text-gray-900">Medical Assistant</h1>
+                    <p class="text-xs text-gray-500">AI-Powered Healthcare</p>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-6">
+            <div>
+                <button onclick="toggleSection('agents-list', 'agents-icon')" class="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+                    <span>Available Agents</span>
+                    <i id="agents-icon" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
+                </button>
+                <div id="agents-list" class="mt-2 space-y-1">
+                    <button class="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg text-sm text-gray-700 transition-colors group">
+                        <i data-lucide="message-square" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
+                        <span>Medical Conversation Agent</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg text-sm text-gray-700 transition-colors group">
+                        <i data-lucide="file-text" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
+                        <span>Medical RAG Agent</span>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <button onclick="toggleSection('vision-list', 'vision-icon')" class="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg text-sm font-medium text-gray-700">
+                    <span>Computer Vision Agents</span>
+                    <i id="vision-icon" data-lucide="chevron-down" class="w-4 h-4 transition-transform"></i>
+                </button>
+                <div id="vision-list" class="mt-2 space-y-1">
+                    <button class="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg text-sm text-gray-700 transition-colors group">
+                        <i data-lucide="brain" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
+                        <span>Brain Tumor Detection</span>
+                    </button>
+                    <button class="w-full flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg text-sm text-gray-700 transition-colors group">
+                        <i data-lucide="activity" class="w-4 h-4 text-gray-400 group-hover:text-blue-600"></i>
+                        <span>Skin Lesion Segmentation</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <h2 class="font-semibold text-gray-900">SOMI Assistant</h2>
+            </div>
+            <button onclick="window.location.reload()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">New Chat</span>
+            </button>
+        </header>
+
+        <div id="chat-container" class="flex-1 overflow-y-auto bg-gray-50">
+            <div class="max-w-4xl mx-auto px-4 py-6">
+                <div id="quick-actions" class="p-6">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Actions</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        <button onclick="sendQuickAction('Symptom Checker')" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white transition-all hover:bg-red-50 hover:shadow-md hover:scale-105 group">
+                            <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center group-hover:bg-white">
+                                <i data-lucide="thermometer" class="w-6 h-6 text-red-500"></i>
+                            </div>
+                            <span class="text-xs text-center text-gray-700 font-medium">Symptom Checker</span>
+                        </button>
+                        <button onclick="handleBookAppointmentQuickAction()" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white transition-all hover:bg-green-50 hover:shadow-md hover:scale-105 group">
+                            <div class="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center group-hover:bg-white">
+                                <i data-lucide="calendar-plus" class="w-6 h-6 text-green-600"></i>
+                            </div>
+                            <span class="text-xs text-center text-gray-700 font-medium">Book Appointment</span>
+                        </button>
+                        <button onclick="openHospitalMap()" class="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-200 bg-white transition-all hover:bg-indigo-50 hover:shadow-md hover:scale-105 group">
+                            <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center group-hover:bg-white">
+                                <i data-lucide="map-pin" class="w-6 h-6 text-indigo-500"></i>
+                            </div>
+                            <span class="text-xs text-center text-gray-700 font-medium">Nearby Hospitals</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="messages-list" class="space-y-6">
+                    <div class="flex justify-center my-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2 max-w-2xl">
+                            <p class="text-sm text-blue-900 font-medium">Welcome! Send medical inquiries, map pins, or medical photos for analysis.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="typing-indicator" class="hidden gap-3 mb-6 mt-6">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                        <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                        <div class="flex gap-1">
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-200 bg-white p-4">
+            <div id="image-preview-container" class="hidden mb-3 p-2 bg-gray-50 rounded-lg border border-gray-200 inline-block relative">
+                <img id="image-preview" src="" class="h-20 rounded-lg" alt="Preview">
+                <button onclick="removeImage()" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 shadow-sm">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </div>
+
+            <form id="chat-form" class="flex items-center gap-3">
+                <input type="file" id="image-input" class="hidden" accept="image/*" onchange="handleImageSelect(this)">
+                <button type="button" onclick="document.getElementById('image-input').click()" class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <i data-lucide="image" class="w-6 h-6"></i>
+                </button>
+                <div class="flex-1">
+                    <textarea id="message-input" rows="1" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 max-h-32 block align-middle" placeholder="Ask a medical question..."></textarea>
+                </div>
+                <button type="button" class="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                    <i data-lucide="mic" class="w-6 h-6"></i>
+                </button>
+                <button type="submit" class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-sm">
+                    <i data-lucide="send" class="w-5 h-5"></i>
+                </button>
+            </form>
+            <p class="text-[10px] text-gray-400 mt-2 text-center">Press Enter to send, Shift + Enter for new line</p>
+        </div>
+    </div>
+
+    <div id="direct-booking-modal" class="fixed inset-0 bg-black/50 z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-200">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="font-semibold text-gray-900">Direct Appointment Booking</h3>
+                <button onclick="closeDirectBooking()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+                </button>
+            </div>
+            <form class="p-6 space-y-4" onsubmit="submitDirectBooking(event)">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Patient Name</label>
+                    <input type="text" id="db-name" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Full Name">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Select Hospital</label>
+                    <select id="db-hospital" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                        <option value="">Select a Tirunelveli Hospital</option>
+                        <option value="Tirunelveli Medical College Hospital">Tirunelveli Medical College Hospital</option>
+                        <option value="Shifa Hospital">Shifa Hospital</option>
+                        <option value="Galaxy Hospital">Galaxy Hospital</option>
+                        <option value="Kauvery Hospital">Kauvery Hospital</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Reason for Visit</label>
+                    <textarea id="db-reason" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none" rows="2" placeholder="e.g. Skin consultation"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Preferred Timing</label>
+                    <input type="datetime-local" id="db-time" required class="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-md">Confirm Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="map-modal" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-6xl h-[85vh] flex flex-col shadow-2xl overflow-hidden relative border border-gray-200">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <div>
+                    <h3 class="font-semibold text-gray-900">Hospital Finder (Tirunelveli)</h3>
+                    <p id="map-status" class="text-xs text-gray-500 font-medium">Scanning for facilities...</p>
+                </div>
+                <button onclick="closeMap()" class="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                    <i data-lucide="x" class="w-5 h-5 text-gray-600"></i>
+                </button>
+            </div>
+            <div class="flex-1 w-full bg-gray-100 relative flex overflow-hidden">
+                <div id="hospital-map" class="flex-1 h-full"></div>
+                <div id="hospital-detail-panel" class="absolute right-0 top-0 h-full w-80 bg-white shadow-xl border-l border-gray-200 panel-hidden flex flex-col">
+                    <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-blue-600 text-white">
+                        <h4 class="font-bold truncate" id="panel-hospital-name">Hospital Details</h4>
+                        <button onclick="closeDetailPanel()" class="p-1 hover:bg-blue-700 rounded-lg"><i data-lucide="chevron-right" class="w-5 h-5"></i></button>
+                    </div>
+                    <div id="panel-content" class="p-5 flex-1 overflow-y-auto space-y-4 no-scrollbar"></div>
+                    <div class="p-4 border-t border-gray-100 bg-gray-50">
+                        <button id="book-btn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-sm flex items-center justify-center gap-2">
+                            <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                            Book Appointment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        let googleMap;
+        const messagesList = document.getElementById('messages-list');
+        const messageInput = document.getElementById('message-input');
+        const chatForm = document.getElementById('chat-form');
+        const chatContainer = document.getElementById('chat-container');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const quickActions = document.getElementById('quick-actions');
+
+        // UI Helpers
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.toggle('hidden');
+        }
+        function toggleSection(listId, iconId) {
+            document.getElementById(listId).classList.toggle('hidden');
+            document.getElementById(iconId).classList.toggle('rotate-180');
+        }
+        function handleImageSelect(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('image-preview').src = e.target.result;
+                    document.getElementById('image-preview-container').classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        function removeImage() {
+            document.getElementById('image-input').value = '';
+            document.getElementById('image-preview-container').classList.add('hidden');
+        }
+
+        // --- SUBMISSION LOGIC (Problem 1 & 2 Fixes) ---
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = messageInput.value.trim();
+            const imageInput = document.getElementById('image-input');
+            const imageFile = imageInput.files[0];
+            const previewSrc = document.getElementById('image-preview').src;
+            const hasImage = !document.getElementById('image-preview-container').classList.contains('hidden');
+
+            if (!text && !hasImage) return;
+
+            if (quickActions) quickActions.style.display = 'none';
+            addMessage(text, 'user', hasImage ? previewSrc : null);
+            
+            messageInput.value = '';
+            removeImage();
+            typingIndicator.classList.remove('hidden');
+            typingIndicator.classList.add('flex');
+
+            const formData = new FormData();
+            formData.append('text', text);
+            if (imageFile) formData.append('image', imageFile);
+
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                typingIndicator.classList.add('hidden');
+                
+                // FIXED: Explicitly access data.response to avoid 'undefined'
+                if (data && data.response) {
+                    addMessage(data.response, 'assistant', data.result_image || null);
+                } else {
+                    addMessage("I processed your query, but the analysis engine returned an empty response.", 'assistant');
+                }
+            } catch (err) {
+                typingIndicator.classList.add('hidden');
+                addMessage("Analysis failed. Check backend connection.", 'assistant');
+            }
+        });
+
+        function addMessage(content, type, imageUrl = null) {
+            const safeContent = content || "Processing...";
+            const div = document.createElement('div');
+            const isUser = type === 'user';
+            const imgHtml = imageUrl ? `<img src="${imageUrl}" class="rounded-lg mb-2 max-w-full border border-gray-100 shadow-sm">` : '';
+
+            div.className = `flex gap-3 mb-6 ${isUser ? 'flex-row-reverse' : 'flex-row'}`;
+            div.innerHTML = `
+                <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isUser ? 'bg-gray-200' : 'bg-gradient-to-br from-blue-500 to-blue-600'}">
+                    <i data-lucide="${isUser ? 'user' : 'bot'}" class="w-5 h-5 ${isUser ? 'text-gray-600' : 'text-white'}"></i>
+                </div>
+                <div class="flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-[70%]">
+                    <div class="rounded-2xl px-4 py-3 shadow-sm ${isUser ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-white border border-gray-100 text-gray-900 rounded-tl-sm'}">
+                        ${imgHtml}
+                        <p class="text-sm leading-relaxed whitespace-pre-wrap">${safeContent}</p>
+                    </div>
+                </div>
+            `;
+            messagesList.appendChild(div);
+            lucide.createIcons();
+            chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+        }
+
+        // --- DIRECT BOOKING FORM (Quick Action) ---
+        function handleBookAppointmentQuickAction() {
+            document.getElementById('direct-booking-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+        function closeDirectBooking() {
+            document.getElementById('direct-booking-modal').classList.add('hidden');
+        }
+        function submitDirectBooking(e) {
+            e.preventDefault();
+            const name = document.getElementById('db-name').value;
+            const hospital = document.getElementById('db-hospital').value;
+            const time = document.getElementById('db-time').value;
+            closeDirectBooking();
+            addMessage(`Appointment Confirmed!\n\n**Patient:** ${name}\n**Hospital:** ${hospital}\n**Time:** ${new Date(time).toLocaleString()}`, 'assistant');
+        }
+
+        // --- MAP & SIDE PANEL LOGIC ---
+        function closeMap() {
+            document.getElementById('map-modal').classList.add('hidden');
+            closeDetailPanel();
+        }
+        function closeDetailPanel() {
+            const panel = document.getElementById('hospital-detail-panel');
+            panel.classList.remove('panel-visible');
+            panel.classList.add('panel-hidden');
+        }
+        function openHospitalMap() {
+            document.getElementById('map-modal').classList.remove('hidden');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(initGoogleMap, () => {
+                    initGoogleMap({ coords: { latitude: 8.7139, longitude: 77.7567 } });
+                });
+            }
+        }
+        function initGoogleMap(position) {
+            const userLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
+            document.getElementById('map-status').innerText = "Facilities Pinpointed.";
+            googleMap = new google.maps.Map(document.getElementById('hospital-map'), {
+                center: userLoc, zoom: 14, fullscreenControl: true, mapTypeControl: false
+            });
+            new google.maps.Marker({ position: userLoc, map: googleMap, title: "Your Location", icon: { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" } });
+            const service = new google.maps.places.PlacesService(googleMap);
+            service.nearbySearch({ location: userLoc, radius: 5000, type: ['hospital'] }, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    results.forEach(place => {
+                        const marker = new google.maps.Marker({ map: googleMap, position: place.geometry.location, title: place.name });
+                        marker.addListener('click', () => showHospitalDetails(place));
+                    });
+                }
+            });
+        }
+        function showHospitalDetails(place) {
+            const panel = document.getElementById('hospital-detail-panel');
+            document.getElementById('panel-hospital-name').innerText = place.name;
+            document.getElementById('panel-content').innerHTML = `
+                <div class="space-y-4">
+                    <img src="${place.photos ? place.photos[0].getUrl() : 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400'}" class="w-full h-32 object-cover rounded-2xl shadow-sm">
+                    <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mb-1">Status</p>
+                        <p class="text-sm text-gray-700"><strong>Address:</strong> ${place.vicinity}</p>
+                        <p class="text-sm text-gray-700"><strong>Rating:</strong> ${place.rating || '4.0'} ⭐</p>
+                    </div>
+                </div>`;
+            document.getElementById('book-btn').onclick = () => { closeMap(); handleBookAppointmentQuickAction(); };
+            panel.classList.remove('panel-hidden'); panel.classList.add('panel-visible');
+            lucide.createIcons();
+        }
+        function sendQuickAction(text) { messageInput.value = text; chatForm.dispatchEvent(new Event('submit')); }
+    </script>
+</body>
+</html>
